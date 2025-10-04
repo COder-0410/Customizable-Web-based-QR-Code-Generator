@@ -20,76 +20,76 @@ A beautiful and functional QR code generator built with vanilla JavaScript and T
 
 ## 🚀 Quick Start
 
-### Option 1: Direct Use
-Simply open the `Test.html` file in your web browser. No installation or setup required!
+Simply open the HTML file in your web browser. No installation or setup required! For better performance, you can optionally run it through a local server using Python, Node.js, or PHP.
 
-### Option 2: Local Server (Recommended)
-```bash
-# Using Python 3
-python -m http.server 8000
+## 📖 How to Use
 
-# Using Node.js (http-server)
-npx http-server
-
-# Using PHP
-php -S localhost:8000
-```
-
-Then open `http://localhost:8000` in your browser.
-
-## 📖 Usage
-
-1. **Enter URL or Text**: Type or paste the URL/text you want to encode
-2. **Customize Colors**: Choose colors for dots and background
-3. **Select Styles**: Pick dot style and corner styles from dropdowns
-4. **Add Logo (Optional)**: 
-   - Click "Upload Image" to add a logo
-   - Adjust logo size and margin with sliders
-   - Optionally remove background from logo
-5. **Download**: Click "Download PNG" or "Download SVG"
+1. **Enter URL or Text** - Type or paste the URL/text you want to encode in the QR code
+2. **Customize Colors** - Choose custom colors for dots and background using the color picker or hex input
+3. **Select Styles** - Pick your preferred dot style and corner styles from the dropdown menus
+4. **Add Logo (Optional)** - Upload an image to place in the center of your QR code, adjust its size and margin, and optionally remove the background
+5. **Download** - Save your QR code as PNG or SVG format
 
 ## 🎨 Customization Options
 
 ### Colors
-- **Dot Color**: Color of the QR code dots/modules
-- **Background Color**: Background color of the QR code
-- Supports hex color input (#FFFFFF or FFF format)
+Choose any color for your QR code dots and background. Supports both color picker and manual hex color input in formats like #FFFFFF or FFF.
 
 ### Dot Styles
-- Square
-- Dots
-- Rounded
-- Extra Rounded
-- Classy
-- Classy Rounded
+Select from six different dot styles: Square, Dots, Rounded, Extra Rounded, Classy, and Classy Rounded to give your QR code a unique appearance.
 
 ### Corner Styles
-- **Outer Corner**: Square, Dot, Extra Rounded
-- **Inner Corner**: Square, Dot
+Customize the appearance of the three corner squares (finder patterns) with options for both outer and inner corners.
 
 ### Error Correction Levels
-- **Low (L)**: ~7% error correction
-- **Medium (M)**: ~15% error correction (default)
-- **Quartile (Q)**: ~25% error correction
-- **High (H)**: ~30% error correction
-
-Higher error correction allows the QR code to be read even if partially damaged or obscured (useful when adding logos).
+Choose from four error correction levels ranging from Low (7%) to High (30%). Higher levels allow the QR code to be scanned even if partially damaged or obscured, which is especially useful when adding logos.
 
 ## 🔧 Technical Details
 
 ### Built With
-- **HTML5** - Structure
-- **Tailwind CSS** - Styling via CDN
-- **Vanilla JavaScript** - Logic and interactivity
-- **QR Code Styling Library** - QR code generation
-- **Canvas API** - Background removal
+- **HTML5** - Page structure
+- **Tailwind CSS** - Modern styling framework via CDN
+- **Vanilla JavaScript** - Core logic and interactivity
+- **QR Code Styling Library** - Advanced QR code generation
+- **Canvas API** - Client-side background removal
 
 ### Browser Support
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+Works on all modern browsers including the latest versions of Chrome, Firefox, Safari, and Edge.
 
+### External Libraries
+All dependencies are loaded via CDN, including Tailwind CSS, QR Code Styling library, and Google Fonts (Inter).
+
+## 🎯 Use Cases
+
+Perfect for creating QR codes for business cards, marketing materials, event tickets, product labels, WiFi sharing, payment links, and much more.
+
+## 🔒 Privacy & Security
+
+All QR code generation and image processing happens locally in your browser. No data is sent to any server, ensuring complete privacy and security for your information.
+
+## 🐛 Known Limitations
+
+The background removal feature works best with images that have solid or uniform backgrounds. The algorithm may not be as accurate as AI-based solutions, but it provides good results for most use cases. The sensitivity threshold can be adjusted if needed.
+
+## 💡 Best Practices
+
+- Use high error correction (Quartile or High) when adding logos to ensure scannability
+- Keep logos centered and sized between 30-40% for optimal results
+- Always test your QR codes with multiple scanning apps before printing
+- Use high contrast colors (dark dots on light background or vice versa) for better scanning
+- Avoid very small QR codes, especially when including logos
+
+## 📝 License
+
+This project is open source and available under the MIT License. You are free to use, modify, and distribute this software for personal or commercial purposes.
+
+## 🙏 Acknowledgments
+
+Special thanks to the creators of QR Code Styling library, Tailwind CSS framework, and Google Fonts for making this project possible.
+
+---
+
+**Made with ❤️ for the community**
 ### Dependencies (Loaded via CDN)
 - [Tailwind CSS](https://tailwindcss.com/) - v3.x
 - [QR Code Styling](https://github.com/kozakdenys/qr-code-styling) - v1.5.0
