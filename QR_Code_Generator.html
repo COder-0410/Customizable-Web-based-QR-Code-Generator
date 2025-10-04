@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QR Code Styling Library -->
+    <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        /* Enhanced color input */
+        .color-input-wrapper {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+        .color-input-wrapper input[type="color"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+        }
+        .color-input-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 0.375rem; /* rounded-md */
+            border: 2px solid #e5e7eb; /* gray-200 */
+            pointer-events: none;
+            transition: border-color 0.2s;
+        }
+        .color-input-wrapper:hover .color-input-preview {
+            border-color: #4f46e5;
+        }
+        .dark .color-input-preview {
+            border-color: #4b5563; /* dark:border-gray-600 */
+        }
+        .dark .color-input-wrapper:hover .color-input-preview {
+            border-color: #6366f1;
+        }
+        /* Hide radio buttons but keep them functional */
+        .color-type-radio {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        /* Style the labels for the radio buttons */
+        .color-type-label {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .dark .color-type-label {
+             background-color: #374151; /* dark:bg-gray-700 */
+             border: 1px solid #4b5563; /* dark:border-gray-600 */
+        }
+        .light .color-type-label {
+            background-color: #f3f4f6; /* light:bg-gray-100 */
+            border: 1px solid #d1d5db; /* light:border-gray-300 */
+        }
+        /* Style for the selected label */
+        .color-type-radio:checked + .color-type-label {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            border-color: #4f46e5;
+        }
+        .dark .color-type-radio:checked + .color-type-label {
+            background-color: #4f46e5;
+        }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease-out;
+        }
+        .dark #loading-screen {
+            background-color: rgba(17, 24, 39, 0.95);
+        }
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .spinner {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">Loading libraries...</p>
+        <p id="loading-status" class="mt-2 text-sm text-gray-500 dark:text-gray-500"></p>
+    </div>
+
+    <div class="container mx-auto p-4 lg:p-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <header class="text-center mb-8 lg:mb-12">
+                <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">QR Code Generator</h1>
+                <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">Create beautiful and functional QR codes with ease.</p>
+            </header>
+
+            <!-- Main Content -->
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Customization Panel -->
+                <div class="w-full lg:w-1/3 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-semibold mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">Customize</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- URL/Text Input -->
+                        <div>
+                            <label for="data" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL or Text</label>
+                            <input type="text" id="data" value="https://www.google.com" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 transition" placeholder="Enter URL or text">
+                        </div>
+                        
+                        <!-- Color Options -->
+                        <details class="group" open>
+                            <summary class="text-lg font-semibold cursor-pointer list-none">Colors & Gradients</summary>
+                            <div class="mt-4 space-y-4">
+                                <!-- Dot Color Options -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dot Color</label>
+                                    <div class="flex items-center gap-4">
+                                        <div class="color-input-wrapper">
+                                            <div id="dots-color-preview" class="color-input-preview" style="background-color: #000000;"></div>
+                                            <input type="color" id="dots-color" value="#000000">
+                                        </div>
+                                        <input type="text" id="dots-color-hex" value="#000000" class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
+                                    </div>
+                                </div>
+                                <!-- Background Color Options -->
+                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Background Color</label>
+                                    <div class="flex items-center gap-4">
+                                        <div class="color-input-wrapper">
+                                            <div id="background-color-preview" class="color-input-preview" style="background-color: #ffffff;"></div>
+                                            <input type="color" id="background-color" value="#ffffff">
+                                        </div>
+                                         <input type="text" id="background-color-hex" value="#ffffff" class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                        
+                        <!-- Style Options -->
+                        <details class="group">
+                             <summary class="text-lg font-semibold cursor-pointer list-none">Shape & Style</summary>
+                             <div class="mt-4 space-y-4">
+                                <div>
+                                    <label for="dots-style" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dot Style</label>
+                                    <select id="dots-style" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                                        <option value="square">Square</option>
+                                        <option value="dots">Dots</option>
+                                        <option value="rounded">Rounded</option>
+                                        <option value="extra-rounded">Extra Rounded</option>
+                                        <option value="classy">Classy</option>
+                                        <option value="classy-rounded">Classy Rounded</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Corner Styles</h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="corner-square-style" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Outer Corner</label>
+                                            <select id="corner-square-style" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                                                <option value="square">Square</option>
+                                                <option value="dot">Dot</option>
+                                                <option value="extra-rounded">Extra Rounded</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="corner-dot-style" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Inner Corner</label>
+                                            <select id="corner-dot-style" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                                                <option value="square">Square</option>
+                                                <option value="dot">Dot</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="error-correction" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Error Correction</label>
+                                    <select id="error-correction" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500">
+                                        <option value="L">Low (L)</option>
+                                        <option value="M" selected>Medium (M)</option>
+                                        <option value="Q">Quartile (Q)</option>
+                                        <option value="H">High (H)</option>
+                                    </select>
+                                </div>
+                             </div>
+                        </details>
+
+                        <!-- Logo Upload -->
+                        <details class="group">
+                             <summary class="text-lg font-semibold cursor-pointer list-none">Logo</summary>
+                             <div class="mt-4 space-y-4">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <label for="logo-upload" class="file-input-label flex-grow cursor-pointer bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-sm hover:bg-gray-200 dark:hover:bg-gray-600">
+                                            Upload Image
+                                        </label>
+                                        <input type="file" id="logo-upload" class="hidden" accept="image/png, image/jpeg, image/svg+xml">
+                                        <button id="remove-logo" class="px-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition disabled:opacity-50" disabled>Remove</button>
+                                    </div>
+                                    <p id="logo-name" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate"></p>
+                                </div>
+                                <div>
+                                     <label for="logo-size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo Size</label>
+                                     <input type="range" id="logo-size" min="0.1" max="0.8" step="0.05" value="0.4" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
+                                </div>
+                                <div>
+                                     <label for="logo-margin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo Margin</label>
+                                     <input type="range" id="logo-margin" min="0" max="20" step="1" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
+                                </div>
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <label for="remove-bg" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                        <input type="checkbox" id="remove-bg" class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <span class="ml-2">Remove Background</span>
+                                    </label>
+                                    <div id="bg-remover-status" class="text-xs text-gray-500 dark:text-gray-400"></div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- QR Code Preview & Download -->
+                <div class="w-full lg:w-2/3 flex flex-col items-center justify-center bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <div id="canvas-container" class="w-full max-w-sm md:max-w-md lg:max-w-lg p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center" style="min-height: 300px;">
+                        <div id="qr-code-canvas"></div>
+                    </div>
+                    <div class="mt-6 flex flex-wrap justify-center gap-4">
+                        <button id="download-png" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                            Download PNG
+                        </button>
+                         <button id="download-svg" class="px-6 py-3 bg-gray-700 dark:bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 transition">
+                            Download SVG
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track library loading status
+        let librariesLoaded = {
+            qrCode: false,
+            backgroundRemoval: true
+        };
+
+        // Check if QR Code library is loaded
+        if (typeof QRCodeStyling !== 'undefined') {
+            librariesLoaded.qrCode = true;
+        }
+
+        // Update loading status
+        function updateLoadingStatus() {
+            const loadingStatus = document.getElementById('loading-status');
+            if (librariesLoaded.qrCode && librariesLoaded.backgroundRemoval) {
+                loadingStatus.textContent = 'All libraries loaded!';
+                setTimeout(() => {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // Canvas-based background removal (works locally)
+        function removeBackgroundCanvas(imageDataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Get background color from corners (average)
+                    const corners = [
+                        { x: 0, y: 0 },
+                        { x: canvas.width - 1, y: 0 },
+                        { x: 0, y: canvas.height - 1 },
+                        { x: canvas.width - 1, y: canvas.height - 1 }
+                    ];
+                    
+                    let bgR = 0, bgG = 0, bgB = 0;
+                    corners.forEach(corner => {
+                        const idx = (corner.y * canvas.width + corner.x) * 4;
+                        bgR += data[idx];
+                        bgG += data[idx + 1];
+                        bgB += data[idx + 2];
+                    });
+                    bgR = Math.floor(bgR / 4);
+                    bgG = Math.floor(bgG / 4);
+                    bgB = Math.floor(bgB / 4);
+                    
+                    // Remove similar colors (threshold-based)
+                    const threshold = 40; // Adjust sensitivity
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        
+                        // Calculate color difference
+                        const diff = Math.sqrt(
+                            Math.pow(r - bgR, 2) +
+                            Math.pow(g - bgG, 2) +
+                            Math.pow(b - bgB, 2)
+                        );
+                        
+                        // Make transparent if similar to background
+                        if (diff < threshold) {
+                            data[i + 3] = 0; // Set alpha to 0 (transparent)
+                        }
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = imageDataUrl;
+            });
+        }
+
+        // Initialize when all core libraries are ready
+        window.addEventListener('load', () => {
+            // --- DOM Element References ---
+            const dataInput = document.getElementById('data');
+            const dotsColorInput = document.getElementById('dots-color');
+            const dotsColorHexInput = document.getElementById('dots-color-hex');
+            const bgColorInput = document.getElementById('background-color');
+            const bgColorHexInput = document.getElementById('background-color-hex');
+            const dotsStyleSelect = document.getElementById('dots-style');
+            const cornerSquareStyleSelect = document.getElementById('corner-square-style');
+            const cornerDotStyleSelect = document.getElementById('corner-dot-style');
+            const errorCorrectionSelect = document.getElementById('error-correction');
+            const logoUploadInput = document.getElementById('logo-upload');
+            const removeLogoBtn = document.getElementById('remove-logo');
+            const logoSizeSlider = document.getElementById('logo-size');
+            const logoMarginSlider = document.getElementById('logo-margin');
+            const removeBgCheckbox = document.getElementById('remove-bg');
+            const bgRemoverStatus = document.getElementById('bg-remover-status');
+            const downloadPngBtn = document.getElementById('download-png');
+            const downloadSvgBtn = document.getElementById('download-svg');
+            const dotsColorPreview = document.getElementById('dots-color-preview');
+            const bgColorPreview = document.getElementById('background-color-preview');
+            const logoNameEl = document.getElementById('logo-name');
+            const qrCanvas = document.getElementById('qr-code-canvas');
+
+            let originalLogo = null;
+            let uploadedLogo = null;
+            
+            // --- QR Code Styling Instance ---
+            const qrCode = new QRCodeStyling({
+                width: 300,
+                height: 300,
+                type: 'svg',
+                data: dataInput.value,
+                dotsOptions: { color: dotsColorInput.value, type: dotsStyleSelect.value },
+                backgroundOptions: { color: bgColorInput.value },
+                cornersSquareOptions: { type: cornerSquareStyleSelect.value },
+                cornersDotOptions: { type: cornerDotStyleSelect.value },
+                qrOptions: { errorCorrectionLevel: errorCorrectionSelect.value },
+                imageOptions: {
+                    crossOrigin: "anonymous",
+                    margin: parseInt(logoMarginSlider.value, 10),
+                    imageSize: parseFloat(logoSizeSlider.value)
+                }
+            });
+
+            qrCode.append(qrCanvas);
+
+            // --- Event Listeners for Customization ---
+            const updateQRCode = () => {
+                qrCode.update({
+                    data: dataInput.value,
+                    dotsOptions: { color: dotsColorInput.value, type: dotsStyleSelect.value },
+                    backgroundOptions: { color: bgColorInput.value },
+                    cornersSquareOptions: { type: cornerSquareStyleSelect.value },
+                    cornersDotOptions: { type: cornerDotStyleSelect.value },
+                    qrOptions: { errorCorrectionLevel: errorCorrectionSelect.value },
+                    image: uploadedLogo,
+                    imageOptions: {
+                        margin: parseInt(logoMarginSlider.value, 10),
+                        imageSize: parseFloat(logoSizeSlider.value)
+                    }
+                });
+            };
+
+            const debounce = (func, delay) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            };
+
+            const debouncedUpdate = debounce(updateQRCode, 200);
+
+            // --- Standard Inputs ---
+            [dataInput, logoSizeSlider, logoMarginSlider].forEach(el => el.addEventListener('input', debouncedUpdate));
+            [dotsStyleSelect, cornerSquareStyleSelect, cornerDotStyleSelect, errorCorrectionSelect].forEach(el => el.addEventListener('change', updateQRCode));
+
+            // --- Enhanced Color Inputs (Picker + Hex with real-time sync) ---
+            const setupColorSync = (colorPicker, hexInput, previewDiv) => {
+                // Update from color picker
+                colorPicker.addEventListener('input', (e) => {
+                    const color = e.target.value.toUpperCase();
+                    hexInput.value = color;
+                    previewDiv.style.backgroundColor = color;
+                    debouncedUpdate();
+                });
+
+                // Update from hex input
+                hexInput.addEventListener('input', (e) => {
+                    let color = e.target.value.trim();
+                    
+                    // Add # if missing
+                    if (color && !color.startsWith('#')) {
+                        color = '#' + color;
+                        hexInput.value = color;
+                    }
+                    
+                    // Validate hex color (3 or 6 digits)
+                    if (/^#([0-9A-F]{3}){1,2}$/i.test(color)) {
+                        // Convert 3-digit hex to 6-digit
+                        if (color.length === 4) {
+                            color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+                        }
+                        color = color.toUpperCase();
+                        hexInput.value = color;
+                        colorPicker.value = color;
+                        previewDiv.style.backgroundColor = color;
+                        debouncedUpdate();
+                    }
+                });
+
+                // Validate on blur
+                hexInput.addEventListener('blur', (e) => {
+                    let color = e.target.value.trim();
+                    if (!color.startsWith('#')) {
+                        color = '#' + color;
+                    }
+                    if (!/^#([0-9A-F]{3}){1,2}$/i.test(color)) {
+                        // Reset to current color picker value if invalid
+                        hexInput.value = colorPicker.value.toUpperCase();
+                    }
+                });
+            };
+
+            setupColorSync(dotsColorInput, dotsColorHexInput, dotsColorPreview);
+            setupColorSync(bgColorInput, bgColorHexInput, bgColorPreview);
+
+            // --- Logo Handling ---
+            const updateBgRemovalStatus = () => {
+                if (uploadedLogo) {
+                    removeBgCheckbox.disabled = false;
+                    bgRemoverStatus.textContent = '';
+                } else {
+                    removeBgCheckbox.disabled = true;
+                    bgRemoverStatus.textContent = '';
+                }
+            };
+
+            logoUploadInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    originalLogo = reader.result;
+                    uploadedLogo = reader.result;
+                    logoNameEl.textContent = file.name;
+                    removeLogoBtn.disabled = false;
+                    removeBgCheckbox.checked = false;
+                    updateBgRemovalStatus();
+                    updateQRCode();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            removeLogoBtn.addEventListener('click', () => {
+                originalLogo = null;
+                uploadedLogo = null;
+                logoUploadInput.value = '';
+                logoNameEl.textContent = '';
+                removeLogoBtn.disabled = true;
+                removeBgCheckbox.disabled = true;
+                removeBgCheckbox.checked = false;
+                bgRemoverStatus.textContent = '';
+                updateQRCode();
+            });
+            
+            // --- Background Removal (Canvas-based, works locally) ---
+            removeBgCheckbox.addEventListener('change', async (e) => {
+                if (!originalLogo) return;
+
+                if (e.target.checked) {
+                    bgRemoverStatus.textContent = 'Processing...';
+                    e.target.disabled = true;
+                    try {
+                        const processedImage = await removeBackgroundCanvas(originalLogo);
+                        uploadedLogo = processedImage;
+                        updateQRCode();
+                        bgRemoverStatus.textContent = 'Done!';
+                        setTimeout(() => bgRemoverStatus.textContent = '', 2000);
+                    } catch (error) {
+                        console.error('Background removal failed:', error);
+                        bgRemoverStatus.textContent = 'Failed!';
+                        e.target.checked = false;
+                        setTimeout(() => bgRemoverStatus.textContent = '', 3000);
+                    } finally {
+                        e.target.disabled = false;
+                    }
+                } else {
+                    uploadedLogo = originalLogo;
+                    updateQRCode();
+                    bgRemoverStatus.textContent = '';
+                }
+            });
+
+
+            // --- Download Functionality ---
+            downloadPngBtn.addEventListener('click', () => qrCode.download({ name: 'qr-code', extension: 'png' }));
+            downloadSvgBtn.addEventListener('click', () => qrCode.download({ name: 'qr-code', extension: 'svg' }));
+
+            // Initial status check
+            updateBgRemovalStatus();
+            updateLoadingStatus();
+        });
+    </script>
+</body>
+</html>
